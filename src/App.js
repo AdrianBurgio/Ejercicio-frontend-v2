@@ -14,6 +14,8 @@ function App() {
   const [usuario, setUsuario] = useState([])
 
   const [modalEditar, setModalEditar] = useState(false);
+  const [modalEliminar, setModalEliminar] = useState(false);
+  const [modalInsertar, setModalInsertar] = useState(false);
 
   const [usuarioSeleccionado, setUsuarioSeleccionado]=useState({
     id:"",
@@ -24,7 +26,7 @@ function App() {
 
   const seleccionarUsuario=(usuario, caso)=>{
     setUsuarioSeleccionado(usuario);
-    (caso==="Editar")&&setModalEditar(true)
+    (caso==="Editar")?setModalEditar(true):setModalEliminar(true)
   }
 
   const handleChange=e=>{
@@ -54,6 +56,32 @@ function App() {
     })
   }
   
+  const peticionDelete=async()=>{
+    await axios.delete(baseUrl+"/"+usuarioSeleccionado.id)
+    .then(response=>{
+      setData(data.filter(usuario=>usuario.id!==usuarioSeleccionado.id));
+      obtenerDatos();
+      setModalEliminar(false);
+    }).catch(error=>{
+      console.log(error);
+    })
+  }
+
+  const abrirModalInsertar=()=>{
+    //usuarioSeleccionado([]);
+    setModalInsertar(true);
+  }
+
+  const peticionPost=async()=>{
+    await axios.post(baseUrl, usuarioSeleccionado)
+    .then(response=>{
+      setData(data.concat(response.data));
+      obtenerDatos();
+      setModalInsertar(false);
+    }).catch(error=>{
+      console.log(error);
+    })
+  }
 
   useEffect(() => {
     obtenerDatos()
@@ -72,7 +100,7 @@ function App() {
   
       <div className="row">
         <div className="col-6">
-          <button className="btn btn-success"><FontAwesomeIcon icon={faUser}/> Agregar usuario</button>
+          <button className="btn btn-success" onClick={()=>abrirModalInsertar()}><FontAwesomeIcon icon={faUser}/> Agregar usuario</button>
         </div>
         <div className="col-6 col-sm-6 d-flex justify-content-end" >
           <input id="inputFiltrar" className="form-control mb-3 col-6"  type="text" placeholder="Filtrar..."/>
@@ -99,7 +127,7 @@ function App() {
               <button type="button" className="btn btn-basic text-primary" data-bs-toggle="tooltip" title="Editar"
                 onClick={()=>seleccionarUsuario(item, 'Editar')}><FontAwesomeIcon icon={faEdit}/></button>
               <button type="button" className="btn btn-basic text-danger" data-bs-toggle="tooltip" title="Eliminar"
-              ><FontAwesomeIcon icon={faTrashAlt}/></button>
+                onClick={()=>seleccionarUsuario(item, 'Eliminar')}><FontAwesomeIcon icon={faTrashAlt}/></button>
             </td>
           </tr>
           ))
@@ -174,7 +202,76 @@ function App() {
         </ModalFooter>
       </Modal>
 
+      <Modal isOpen={modalEliminar}>
+        <ModalBody>
+          Estás Seguro que deseas eliminar el usuario: {usuarioSeleccionado && usuarioSeleccionado.username}
+        </ModalBody>
+        <ModalFooter>
+          <button className="btn btn-danger" onClick={()=>peticionDelete()}>
+            Sí
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={()=>setModalEliminar(false)}
+          >
+            No
+          </button>
+        </ModalFooter>
+      </Modal>
 
+      <Modal isOpen={modalInsertar}>
+        <ModalHeader>
+          <div>
+            <h3>Insertar Usuario</h3>
+          </div>
+        </ModalHeader>
+        <ModalBody>
+          <div className="form-group">
+            <label>Nombre de usuario</label>
+            <input
+              className="form-control"
+              type="text"
+              name="username"
+              value={usuarioSeleccionado ? usuarioSeleccionado.usermane: ''}
+              onChange={handleChange}
+            />
+            <br />
+
+            <label>Email</label>
+            <input
+              className="form-control"
+              type="text"
+              name="email"
+              value={usuarioSeleccionado ? usuarioSeleccionado.email: ''}
+              onChange={handleChange}
+            />
+            <br />
+
+            <label>Teléfono</label>
+            <input
+              className="form-control"
+              type="text"
+              name="telefono"
+              value={usuarioSeleccionado ? usuarioSeleccionado.telefono: ''}
+              onChange={handleChange}
+            />
+            <br />
+
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <button className="btn btn-success"
+            onClick={()=>peticionPost()}>
+            Insertar
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={()=>setModalInsertar(false)}
+          >
+            Cancelar
+          </button>
+        </ModalFooter>
+      </Modal>
     
     </div>
    
