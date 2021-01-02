@@ -1,14 +1,59 @@
 import React , {useState , useEffect} from 'react';
 import "bootstrap/dist/css/bootstrap.min.css";
+import axios from 'axios';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { render } from '@testing-library/react';
+import { faEdit, faTrashAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 
 
 function App() {
 
+  const baseUrl="https://localhost:44358/api/usuarios";
+
+  const [data, setData]=useState([]);
   const [usuario, setUsuario] = useState([])
+
+  const [modalEditar, setModalEditar] = useState(false);
+
+  const [usuarioSeleccionado, setUsuarioSeleccionado]=useState({
+    id:"",
+    username: "",
+    email: "",
+    telefono: ""
+  })
+
+  const seleccionarUsuario=(usuario, caso)=>{
+    setUsuarioSeleccionado(usuario);
+    (caso==="Editar")&&setModalEditar(true)
+  }
+
+  const handleChange=e=>{
+    const {name, value}=e.target;
+    setUsuarioSeleccionado(prevState=>({
+      ...prevState,
+      [name]: value
+    }));
+  }
+
+  const peticionPut=async()=>{
+    await axios.put(baseUrl+"/"+usuarioSeleccionado.id, usuarioSeleccionado)
+    .then(response=>{
+      var dataNueva= data;
+      dataNueva.map(usuario=>{
+        if(usuario.id===usuarioSeleccionado.id){
+          usuario.username=usuarioSeleccionado.username;
+          usuario.email=usuarioSeleccionado.email;
+          usuario.telefono=usuarioSeleccionado.telefono;
+        }
+      });
+      setData(dataNueva);
+      obtenerDatos();
+      setModalEditar(false);
+    }).catch(error=>{
+      console.log(error);
+    })
+  }
+  
 
   useEffect(() => {
     obtenerDatos()
@@ -20,14 +65,20 @@ function App() {
     setUsuario(usuarios)
   }
 
-  render()
-  {
   return (
     <div className="container">
       <h2 className="mt-5">Usuarios</h2>
 
-      <input id="inputFiltrar" className="form-control mb-3 col-6"  type="text" placeholder="Filtrar..."/>
-   
+  
+      <div className="row">
+        <div className="col-6">
+          <button className="btn btn-success"><FontAwesomeIcon icon={faUser}/> Agregar usuario</button>
+        </div>
+        <div className="col-6 col-sm-6 d-flex justify-content-end" >
+          <input id="inputFiltrar" className="form-control mb-3 col-6"  type="text" placeholder="Filtrar..."/>
+        </div>
+      </div>
+
       <table className="table table-striped table-hover ">
        <thead className="bg-secondary">
           <tr>
@@ -45,17 +96,89 @@ function App() {
             <td>{item.email}</td>
             <td>{item.telefono}</td>
             <td>
-              <button type="button" className="btn btn-basic text-primary" data-bs-toggle="tooltip" title="Editar"><FontAwesomeIcon icon={faEdit}/></button>
-              <button type="button" className="btn btn-basic text-danger" data-bs-toggle="tooltip" title="Eliminar"><FontAwesomeIcon icon={faTrashAlt}/></button>
+              <button type="button" className="btn btn-basic text-primary" data-bs-toggle="tooltip" title="Editar"
+                onClick={()=>seleccionarUsuario(item, 'Editar')}><FontAwesomeIcon icon={faEdit}/></button>
+              <button type="button" className="btn btn-basic text-danger" data-bs-toggle="tooltip" title="Eliminar"
+              ><FontAwesomeIcon icon={faTrashAlt}/></button>
             </td>
           </tr>
           ))
         }
         </tbody>
       </table> 
+
+
+      <Modal isOpen={modalEditar}>
+        <ModalHeader>
+          <div>
+            <h3>Editar Usuario</h3>
+          </div>
+        </ModalHeader>
+        <ModalBody>
+          <div className="form-group">
+            <label>ID</label>
+            <input
+              className="form-control"
+              readOnly
+              type="text"
+              name="id"
+              value={usuarioSeleccionado && usuarioSeleccionado.id}
+            />
+            <br />
+
+            <label>Nombre de usuario</label>
+            <input
+              className="form-control"
+              type="text"
+              name="username"
+              value={usuarioSeleccionado && usuarioSeleccionado.username}
+              onChange={handleChange}
+            />
+            <br />
+
+            <label>Email</label>
+            <input
+              className="form-control"
+              type="text"
+              name="email"
+              value={usuarioSeleccionado && usuarioSeleccionado.email}
+              onChange={handleChange}
+            />
+            <br />
+
+            <label>Teléfono</label>
+            <input
+              className="form-control"
+              type="text"
+              name="telefono"
+              value={usuarioSeleccionado && usuarioSeleccionado.telefono}
+              onChange={handleChange}
+            />
+            <br />
+
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <button 
+            className="btn btn-primary" 
+            onClick={()=>peticionPut()}
+          >
+            Actualizar
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={()=>setModalEditar(false)}
+          >
+            Cancelar
+          </button>
+        </ModalFooter>
+      </Modal>
+
+
+    
     </div>
+   
   );
-  }
 }
 
 export default App;
