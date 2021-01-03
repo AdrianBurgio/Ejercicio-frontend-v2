@@ -68,7 +68,7 @@ function App() {
   }
 
   const abrirModalInsertar=()=>{
-    //usuarioSeleccionado([]);
+    setUsuarioSeleccionado(null);
     setModalInsertar(true);
   }
 
